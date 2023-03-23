@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 class Feedforward(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -99,13 +100,28 @@ class DecoderOnly(nn.Module):
         logits = self.out(x)
         return logits
 
+class MultiLayerFeedForward(nn.Module):
+    def __init__(self, n_layers, n_inputs, d_model, n_outputs):
+        super().__init__()
+
+        self.in_layer = nn.Linear(n_inputs, d_model)
+        self.layers = nn.ModuleList([nn.Linear(d_model, d_model) for _ in range(n_layers)])
+        self.out_layer = nn.Linear(d_model, n_outputs)
+    
+    def forward(self, x):
+        x = F.gelu(self.in_layer(x))
+        for l in self.layers:
+            x = F.gelu(l(x))
+        x = self.out_layer(x)
+        return x
+
 class TestModel(nn.Module):
     def __init__(self, n_inputs, d_model, n_outputs):
         super().__init__()
 
         self.ff1 = Feedforward(n_inputs, d_model, n_outputs)
-        #self.gelu = nn.GELU()
-        #self.ff2 = Feedforward(d_model, d_model, n_outputs)
+        self.gelu = nn.GELU()
+        self.ff2 = Feedforward(d_model, d_model, n_outputs)
 
     def forward(self, x):
         return self.ff1(x)

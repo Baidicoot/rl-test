@@ -1,13 +1,13 @@
 import gymnasium as gym
 import torch
-from goofy import TestModel
+from goofy import MultiLayerFeedForward
 
 env = gym.make("LunarLander-v2", render_mode="human")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-policy = TestModel(8, 16, 4)
-policy.load_state_dict(torch.load("policy_1M.pt", map_location=device))
+policy = MultiLayerFeedForward(2, 8, 4, 4).to(device)
+policy.load_state_dict(torch.load("policy_100K.pt", map_location=device))
 
 obs, info = env.reset()
 state = torch.tensor(obs, device=device, dtype=torch.float32)
